@@ -30,6 +30,24 @@ The automation platform now does what it is good at — polling, dispatch, retry
 
 - `lead_analyzer.py` — the classifier. Deterministic conditions, with a model fallback returning strict JSON against a fixed schema.
 - `server.py` — Flask wrapper exposing single and batch endpoints with API key auth.
+- `make/dispatcher.blueprint.json` — the Make.com scenario that calls this service: pulls unanalysed transcripts from MySQL, POSTs each to the API, writes the classification back. Sanitised; credentials, host and internal IDs tokenised.
+
+The dispatcher is also where the retry handling lives — a chain of nested error handlers, each a sleep followed by a repeat of the same request. A retry loop with backoff, unrolled by hand into a diagram. It works, but it is the clearest illustration of why the logic moved here and the dispatch stayed there.
+
+## Running it
+
+```bash
+pip install -r requirements.txt
+cp .env.example .env    # then fill in LEAD_API_KEY and OPENAI_API_KEY
+python server.py
+```
+
+```bash
+curl -X POST http://localhost:8080/webhook \
+  -H "X-API-Key: $LEAD_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"transcript": "Speaker A: Hello...", "phonecall": "yes"}'
+```
 
 ## Reliability
 
@@ -45,3 +63,7 @@ Published as it runs, not as it should be. In rough order of how much they bothe
 - **`analyze_batch` accepts an unbounded array**, each element costing a potential model call.
 - **Several hundred hand-tuned conditions are a maintenance liability.** Fast, free and explainable, but brittle against lead sources that did not exist when they were written. Tracking how often the model fallback fires would surface that drift early.
 - **The 6% is uncharacterised.** Knowing the error rate is not the same as knowing whether the misses cluster in one source, or whether they skew towards disqualifying real leads rather than passing spam. Those have very different costs.
+
+## Licence
+
+Published as a portfolio sample rather than for reuse.
