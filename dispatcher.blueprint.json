@@ -1,0 +1,2396 @@
+{
+  "name": "CTO - Chat GPT - Lead Verification - V19 - ON",
+  "flow": [
+    {
+      "id": 223,
+      "module": "gateway:CustomWebHook",
+      "version": 1,
+      "parameters": {
+        "hook": "WEBHOOK_1",
+        "maxResults": 1
+      },
+      "mapper": {},
+      "metadata": {
+        "designer": {
+          "x": 0,
+          "y": 1800
+        },
+        "restore": {
+          "parameters": {
+            "hook": {
+              "data": {
+                "editable": "true"
+              },
+              "label": "lead system AI webhook"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hook",
+            "type": "hook:gateway-webhook",
+            "label": "Webhook",
+            "required": true
+          },
+          {
+            "name": "maxResults",
+            "type": "number",
+            "label": "Maximum number of results"
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "module": "mysql:SelectFromTable",
+      "version": 2,
+      "parameters": {
+        "table": "`systems_log`.`product_results_data`",
+        "account": 50795,
+        "continueWhenNoRes": false,
+        "isToManageDataInSharedTransaction": true
+      },
+      "mapper": {
+        "sort": [
+          {
+            "order": "desc",
+            "column": "Date"
+          }
+        ],
+        "limit": "50",
+        "where": [
+          [
+            {
+              "a": "Outcome",
+              "o": "notexist"
+            },
+            {
+              "a": "Status",
+              "b": "Waiting Analysis",
+              "o": "equal"
+            },
+            {
+              "a": "primary_id",
+              "b": "{{223.primary_id}}",
+              "o": "equal"
+            }
+          ]
+        ]
+      },
+      "metadata": {
+        "designer": {
+          "x": 300,
+          "y": 1800,
+          "name": "Waiting Analysis "
+        },
+        "parameters": [
+          {
+            "name": "account",
+            "type": "account:mysql",
+            "label": "Connection",
+            "required": true
+          },
+          {
+            "name": "continueWhenNoRes",
+            "type": "boolean",
+            "label": "Continue the execution of the route even if the module returns no rows",
+            "required": true
+          },
+          {
+            "name": "isToManageDataInSharedTransaction",
+            "type": "boolean",
+            "label": "Manage data within the shared transaction",
+            "required": true
+          },
+          {
+            "name": "table",
+            "type": "select",
+            "label": "Table",
+            "required": true
+          }
+        ]
+      }
+    },
+    {
+      "id": 159,
+      "module": "builtin:BasicRouter",
+      "version": 1,
+      "mapper": null,
+      "metadata": {
+        "designer": {
+          "x": 600,
+          "y": 1800
+        }
+      },
+      "routes": [
+        {
+          "flow": [
+            {
+              "id": 201,
+              "module": "util:SetVariables",
+              "version": 1,
+              "parameters": {},
+              "filter": {
+                "name": "",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{2.Transcription}}",
+                      "o": "exist"
+                    }
+                  ]
+                ]
+              },
+              "mapper": {
+                "scope": "roundtrip",
+                "variables": [
+                  {
+                    "name": "Spam",
+                    "value": "{{emptystring}}"
+                  },
+                  {
+                    "name": "Outcome",
+                    "value": "{{emptystring}}"
+                  },
+                  {
+                    "name": "Answer",
+                    "value": "{{emptystring}}"
+                  }
+                ]
+              },
+              "metadata": {
+                "designer": {
+                  "x": 900,
+                  "y": 1650
+                }
+              }
+            },
+            {
+              "id": 198,
+              "module": "http:MakeRequest",
+              "version": 4,
+              "parameters": {
+                "tlsType": "",
+                "proxyKeychain": "",
+                "authenticationType": "noAuth"
+              },
+              "mapper": {
+                "url": "https://lead-analyzer",
+                "method": "post",
+                "headers": [
+                  {
+                    "name": "X-API-Key",
+                    "value": "__REDACTED__"
+                  }
+                ],
+                "contentType": "json",
+                "inputMethod": "dataStructure",
+                "shareCookies": false,
+                "parseResponse": true,
+                "allowRedirects": true,
+                "stopOnHttpError": true,
+                "bodyDataStructure": 11850,
+                "dataStructureBodyContent": {
+                  "transcript": "{{2.Transcription}}",
+                  "is_phone_call": "{{if(2.`Recording URL` = \"N/A - Lead Connector\"; \"No\"; if(length(2.`Recording URL`) > 1; \"Yes\"; \"No\"))}}"
+                },
+                "requestCompressedContent": true
+              },
+              "metadata": {
+                "designer": {
+                  "x": 1200,
+                  "y": 1650
+                }
+              },
+              "onerror": [
+                {
+                  "id": 210,
+                  "module": "util:FunctionSleep",
+                  "version": 1,
+                  "parameters": {},
+                  "mapper": {
+                    "duration": "30"
+                  },
+                  "metadata": {
+                    "designer": {
+                      "x": 1500,
+                      "y": 2100
+                    }
+                  }
+                },
+                {
+                  "id": 208,
+                  "module": "http:MakeRequest",
+                  "version": 4,
+                  "parameters": {
+                    "tlsType": "",
+                    "proxyKeychain": "",
+                    "authenticationType": "noAuth"
+                  },
+                  "mapper": {
+                    "url": "https://lead-analyzer",
+                    "method": "post",
+                    "headers": [
+                      {
+                        "name": "X-API-Key",
+                        "value": "__REDACTED__"
+                      }
+                    ],
+                    "contentType": "json",
+                    "inputMethod": "dataStructure",
+                    "shareCookies": false,
+                    "parseResponse": true,
+                    "allowRedirects": true,
+                    "stopOnHttpError": true,
+                    "bodyDataStructure": 11850,
+                    "dataStructureBodyContent": {
+                      "transcript": "{{2.Transcription}}",
+                      "is_phone_call": "{{if(2.`Recording URL` = \"N/A - Lead Connector\"; \"No\"; if(length(2.`Recording URL`) > 1; \"Yes\"; \"No\"))}}"
+                    },
+                    "requestCompressedContent": true
+                  },
+                  "metadata": {
+                    "designer": {
+                      "x": 1800,
+                      "y": 2100
+                    }
+                  },
+                  "onerror": [
+                    {
+                      "id": 218,
+                      "module": "util:FunctionSleep",
+                      "version": 1,
+                      "parameters": {},
+                      "mapper": {
+                        "duration": "30"
+                      },
+                      "metadata": {
+                        "designer": {
+                          "x": 2100,
+                          "y": 2250
+                        }
+                      }
+                    },
+                    {
+                      "id": 211,
+                      "module": "http:MakeRequest",
+                      "version": 4,
+                      "parameters": {
+                        "tlsType": "",
+                        "proxyKeychain": "",
+                        "authenticationType": "noAuth"
+                      },
+                      "mapper": {
+                        "url": "https://lead-analyzer",
+                        "method": "post",
+                        "headers": [
+                          {
+                            "name": "X-API-Key",
+                            "value": "__REDACTED__"
+                          }
+                        ],
+                        "contentType": "json",
+                        "inputMethod": "dataStructure",
+                        "shareCookies": false,
+                        "parseResponse": true,
+                        "allowRedirects": true,
+                        "stopOnHttpError": true,
+                        "bodyDataStructure": 11850,
+                        "dataStructureBodyContent": {
+                          "transcript": "{{2.Transcription}}",
+                          "is_phone_call": "{{if(2.`Recording URL` = \"N/A - Lead Connector\"; \"No\"; if(length(2.`Recording URL`) > 1; \"Yes\"; \"No\"))}}"
+                        },
+                        "requestCompressedContent": true
+                      },
+                      "metadata": {
+                        "designer": {
+                          "x": 2400,
+                          "y": 2250
+                        }
+                      },
+                      "onerror": [
+                        {
+                          "id": 224,
+                          "module": "util:FunctionSleep",
+                          "version": 1,
+                          "parameters": {},
+                          "mapper": {
+                            "duration": "30"
+                          },
+                          "metadata": {
+                            "designer": {
+                              "x": 2700,
+                              "y": 2400
+                            }
+                          }
+                        },
+                        {
+                          "id": 225,
+                          "module": "http:MakeRequest",
+                          "version": 4,
+                          "parameters": {
+                            "tlsType": "",
+                            "proxyKeychain": "",
+                            "authenticationType": "noAuth"
+                          },
+                          "mapper": {
+                            "url": "https://lead-analyzer",
+                            "method": "post",
+                            "headers": [
+                              {
+                                "name": "X-API-Key",
+                                "value": "__REDACTED__"
+                              }
+                            ],
+                            "contentType": "json",
+                            "inputMethod": "dataStructure",
+                            "shareCookies": false,
+                            "parseResponse": true,
+                            "allowRedirects": true,
+                            "stopOnHttpError": true,
+                            "bodyDataStructure": 11850,
+                            "dataStructureBodyContent": {
+                              "transcript": "{{2.Transcription}}",
+                              "is_phone_call": "{{if(2.`Recording URL` = \"N/A - Lead Connector\"; \"No\"; if(length(2.`Recording URL`) > 1; \"Yes\"; \"No\"))}}"
+                            },
+                            "requestCompressedContent": true
+                          },
+                          "metadata": {
+                            "designer": {
+                              "x": 3000,
+                              "y": 2400
+                            }
+                          },
+                          "onerror": [
+                            {
+                              "id": 228,
+                              "module": "util:FunctionSleep",
+                              "version": 1,
+                              "parameters": {},
+                              "mapper": {
+                                "duration": "30"
+                              },
+                              "metadata": {
+                                "designer": {
+                                  "x": 3300,
+                                  "y": 2550
+                                }
+                              }
+                            },
+                            {
+                              "id": 229,
+                              "module": "http:MakeRequest",
+                              "version": 4,
+                              "parameters": {
+                                "tlsType": "",
+                                "proxyKeychain": "",
+                                "authenticationType": "noAuth"
+                              },
+                              "mapper": {
+                                "url": "https://lead-analyzer",
+                                "method": "post",
+                                "headers": [
+                                  {
+                                    "name": "X-API-Key",
+                                    "value": "__REDACTED__"
+                                  }
+                                ],
+                                "contentType": "json",
+                                "inputMethod": "dataStructure",
+                                "shareCookies": false,
+                                "parseResponse": true,
+                                "allowRedirects": true,
+                                "stopOnHttpError": true,
+                                "bodyDataStructure": 11850,
+                                "dataStructureBodyContent": {
+                                  "transcript": "{{2.Transcription}}",
+                                  "is_phone_call": "{{if(2.`Recording URL` = \"N/A - Lead Connector\"; \"No\"; if(length(2.`Recording URL`) > 1; \"Yes\"; \"No\"))}}"
+                                },
+                                "requestCompressedContent": true
+                              },
+                              "metadata": {
+                                "designer": {
+                                  "x": 3600,
+                                  "y": 2550
+                                }
+                              },
+                              "onerror": [
+                                {
+                                  "id": 233,
+                                  "module": "util:FunctionSleep",
+                                  "version": 1,
+                                  "parameters": {},
+                                  "mapper": {
+                                    "duration": "30"
+                                  },
+                                  "metadata": {
+                                    "designer": {
+                                      "x": 3900,
+                                      "y": 2700
+                                    }
+                                  }
+                                },
+                                {
+                                  "id": 234,
+                                  "module": "http:MakeRequest",
+                                  "version": 4,
+                                  "parameters": {
+                                    "tlsType": "",
+                                    "proxyKeychain": "",
+                                    "authenticationType": "noAuth"
+                                  },
+                                  "mapper": {
+                                    "url": "https://lead-analyzer",
+                                    "method": "post",
+                                    "headers": [
+                                      {
+                                        "name": "X-API-Key",
+                                        "value": "__REDACTED__"
+                                      }
+                                    ],
+                                    "contentType": "json",
+                                    "inputMethod": "dataStructure",
+                                    "shareCookies": false,
+                                    "parseResponse": true,
+                                    "allowRedirects": true,
+                                    "stopOnHttpError": true,
+                                    "bodyDataStructure": 11850,
+                                    "dataStructureBodyContent": {
+                                      "transcript": "{{2.Transcription}}",
+                                      "is_phone_call": "{{if(2.`Recording URL` = \"N/A - Lead Connector\"; \"No\"; if(length(2.`Recording URL`) > 1; \"Yes\"; \"No\"))}}"
+                                    },
+                                    "requestCompressedContent": true
+                                  },
+                                  "metadata": {
+                                    "designer": {
+                                      "x": 4200,
+                                      "y": 2700
+                                    }
+                                  },
+                                  "onerror": [
+                                    {
+                                      "id": 246,
+                                      "module": "util:FunctionSleep",
+                                      "version": 1,
+                                      "parameters": {},
+                                      "mapper": {
+                                        "duration": "30"
+                                      },
+                                      "metadata": {
+                                        "designer": {
+                                          "x": 4500,
+                                          "y": 2850
+                                        }
+                                      }
+                                    },
+                                    {
+                                      "id": 237,
+                                      "module": "http:MakeRequest",
+                                      "version": 4,
+                                      "parameters": {
+                                        "tlsType": "",
+                                        "proxyKeychain": "",
+                                        "authenticationType": "noAuth"
+                                      },
+                                      "mapper": {
+                                        "url": "https://lead-analyzer",
+                                        "method": "post",
+                                        "headers": [
+                                          {
+                                            "name": "X-API-Key",
+                                            "value": "__REDACTED__"
+                                          }
+                                        ],
+                                        "contentType": "json",
+                                        "inputMethod": "dataStructure",
+                                        "shareCookies": false,
+                                        "parseResponse": true,
+                                        "allowRedirects": true,
+                                        "stopOnHttpError": true,
+                                        "bodyDataStructure": 11850,
+                                        "dataStructureBodyContent": {
+                                          "transcript": "{{2.Transcription}}",
+                                          "is_phone_call": "{{if(2.`Recording URL` = \"N/A - Lead Connector\"; \"No\"; if(length(2.`Recording URL`) > 1; \"Yes\"; \"No\"))}}"
+                                        },
+                                        "requestCompressedContent": true
+                                      },
+                                      "metadata": {
+                                        "designer": {
+                                          "x": 4800,
+                                          "y": 2850
+                                        }
+                                      },
+                                      "onerror": [
+                                        {
+                                          "id": 250,
+                                          "module": "util:FunctionSleep",
+                                          "version": 1,
+                                          "parameters": {},
+                                          "mapper": {
+                                            "duration": "30"
+                                          },
+                                          "metadata": {
+                                            "designer": {
+                                              "x": 5100,
+                                              "y": 3000
+                                            }
+                                          }
+                                        },
+                                        {
+                                          "id": 240,
+                                          "module": "http:MakeRequest",
+                                          "version": 4,
+                                          "parameters": {
+                                            "tlsType": "",
+                                            "proxyKeychain": "",
+                                            "authenticationType": "noAuth"
+                                          },
+                                          "mapper": {
+                                            "url": "https://lead-analyzer",
+                                            "method": "post",
+                                            "headers": [
+                                              {
+                                                "name": "X-API-Key",
+                                                "value": "__REDACTED__"
+                                              }
+                                            ],
+                                            "contentType": "json",
+                                            "inputMethod": "dataStructure",
+                                            "shareCookies": false,
+                                            "parseResponse": true,
+                                            "allowRedirects": true,
+                                            "stopOnHttpError": true,
+                                            "bodyDataStructure": 11850,
+                                            "dataStructureBodyContent": {
+                                              "transcript": "{{2.Transcription}}",
+                                              "is_phone_call": "{{if(2.`Recording URL` = \"N/A - Lead Connector\"; \"No\"; if(length(2.`Recording URL`) > 1; \"Yes\"; \"No\"))}}"
+                                            },
+                                            "requestCompressedContent": true
+                                          },
+                                          "metadata": {
+                                            "designer": {
+                                              "x": 5400,
+                                              "y": 3000
+                                            }
+                                          },
+                                          "onerror": [
+                                            {
+                                              "id": 251,
+                                              "module": "util:FunctionSleep",
+                                              "version": 1,
+                                              "parameters": {},
+                                              "mapper": {
+                                                "duration": "30"
+                                              },
+                                              "metadata": {
+                                                "designer": {
+                                                  "x": 5700,
+                                                  "y": 3150
+                                                }
+                                              }
+                                            },
+                                            {
+                                              "id": 243,
+                                              "module": "http:MakeRequest",
+                                              "version": 4,
+                                              "parameters": {
+                                                "tlsType": "",
+                                                "proxyKeychain": "",
+                                                "authenticationType": "noAuth"
+                                              },
+                                              "mapper": {
+                                                "url": "https://lead-analyzer",
+                                                "method": "post",
+                                                "headers": [
+                                                  {
+                                                    "name": "X-API-Key",
+                                                    "value": "__REDACTED__"
+                                                  }
+                                                ],
+                                                "contentType": "json",
+                                                "inputMethod": "dataStructure",
+                                                "shareCookies": false,
+                                                "parseResponse": true,
+                                                "allowRedirects": true,
+                                                "stopOnHttpError": true,
+                                                "bodyDataStructure": 11850,
+                                                "dataStructureBodyContent": {
+                                                  "transcript": "{{2.Transcription}}",
+                                                  "is_phone_call": "{{if(2.`Recording URL` = \"N/A - Lead Connector\"; \"No\"; if(length(2.`Recording URL`) > 1; \"Yes\"; \"No\"))}}"
+                                                },
+                                                "requestCompressedContent": true
+                                              },
+                                              "metadata": {
+                                                "designer": {
+                                                  "x": 6000,
+                                                  "y": 3150
+                                                }
+                                              },
+                                              "onerror": [
+                                                {
+                                                  "id": 212,
+                                                  "module": "slack:CreateMessage",
+                                                  "version": 4,
+                                                  "parameters": {
+                                                    "__IMTCONN__": "CONNECTION_1"
+                                                  },
+                                                  "mapper": {
+                                                    "text": "AI Analsysis Failed - API Call \n\n{{var.scenario.executionUrl}}\n\n<@U029VBH2F6D>",
+                                                    "parse": false,
+                                                    "mrkdwn": true,
+                                                    "channel": "SLACK_CHANNEL_1",
+                                                    "channelType": "private",
+                                                    "channelWType": "list"
+                                                  },
+                                                  "metadata": {
+                                                    "designer": {
+                                                      "x": 6300,
+                                                      "y": 3300
+                                                    },
+                                                    "parameters": [
+                                                      {
+                                                        "name": "__IMTCONN__",
+                                                        "type": "account:slack2,slack3",
+                                                        "label": "Connection",
+                                                        "required": true
+                                                      }
+                                                    ]
+                                                  }
+                                                },
+                                                {
+                                                  "id": 249,
+                                                  "module": "builtin:Ignore",
+                                                  "version": 1,
+                                                  "metadata": {
+                                                    "designer": {
+                                                      "x": 6600,
+                                                      "y": 3300
+                                                    }
+                                                  }
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "id": 244,
+                                              "module": "builtin:Resume",
+                                              "version": 1,
+                                              "parameters": {},
+                                              "mapper": {
+                                                "data": "{{243.data}}",
+                                                "headers": {
+                                                  "server": "{{243.headers.server}}",
+                                                  "set-cookie": [],
+                                                  "content-type": "{{243.headers.`content-type`}}",
+                                                  "cache-control": "{{243.headers.`cache-control`}}",
+                                                  "content-length": "{{243.headers.`content-length`}}",
+                                                  "content-encoding": "{{243.headers.`content-encoding`}}"
+                                                },
+                                                "statusCode": "{{243.statusCode}}"
+                                              },
+                                              "metadata": {
+                                                "designer": {
+                                                  "x": 6300,
+                                                  "y": 3000
+                                                }
+                                              }
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "id": 241,
+                                          "module": "builtin:Resume",
+                                          "version": 1,
+                                          "parameters": {},
+                                          "mapper": {
+                                            "data": "{{240.data}}",
+                                            "headers": {
+                                              "server": "{{240.headers.server}}",
+                                              "set-cookie": [],
+                                              "content-type": "{{240.headers.`content-type`}}",
+                                              "cache-control": "{{240.headers.`cache-control`}}",
+                                              "content-length": "{{240.headers.`content-length`}}",
+                                              "content-encoding": "{{240.headers.`content-encoding`}}"
+                                            },
+                                            "statusCode": "{{240.statusCode}}"
+                                          },
+                                          "metadata": {
+                                            "designer": {
+                                              "x": 5700,
+                                              "y": 2700
+                                            }
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "id": 238,
+                                      "module": "builtin:Resume",
+                                      "version": 1,
+                                      "parameters": {},
+                                      "mapper": {
+                                        "data": "{{237.data}}",
+                                        "headers": {
+                                          "server": "{{237.headers.server}}",
+                                          "set-cookie": [],
+                                          "content-type": "{{237.headers.`content-type`}}",
+                                          "cache-control": "{{237.headers.`cache-control`}}",
+                                          "content-length": "{{237.headers.`content-length`}}",
+                                          "content-encoding": "{{237.headers.`content-encoding`}}"
+                                        },
+                                        "statusCode": "{{237.statusCode}}"
+                                      },
+                                      "metadata": {
+                                        "designer": {
+                                          "x": 5100,
+                                          "y": 2400
+                                        }
+                                      }
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": 235,
+                                  "module": "builtin:Resume",
+                                  "version": 1,
+                                  "parameters": {},
+                                  "mapper": {
+                                    "data": "{{234.data}}",
+                                    "headers": {
+                                      "server": "{{234.headers.server}}",
+                                      "set-cookie": [],
+                                      "content-type": "{{234.headers.`content-type`}}",
+                                      "cache-control": "{{234.headers.`cache-control`}}",
+                                      "content-length": "{{234.headers.`content-length`}}",
+                                      "content-encoding": "{{234.headers.`content-encoding`}}"
+                                    },
+                                    "statusCode": "{{234.statusCode}}"
+                                  },
+                                  "metadata": {
+                                    "designer": {
+                                      "x": 4500,
+                                      "y": 2100
+                                    }
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "id": 230,
+                              "module": "builtin:Resume",
+                              "version": 1,
+                              "parameters": {},
+                              "mapper": {
+                                "data": "{{229.data}}",
+                                "headers": {
+                                  "server": "{{229.headers.server}}",
+                                  "set-cookie": [],
+                                  "content-type": "{{229.headers.`content-type`}}",
+                                  "cache-control": "{{229.headers.`cache-control`}}",
+                                  "content-length": "{{229.headers.`content-length`}}",
+                                  "content-encoding": "{{229.headers.`content-encoding`}}"
+                                },
+                                "statusCode": "{{229.statusCode}}"
+                              },
+                              "metadata": {
+                                "designer": {
+                                  "x": 3900,
+                                  "y": 1800
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "id": 226,
+                          "module": "builtin:Resume",
+                          "version": 1,
+                          "parameters": {},
+                          "mapper": {
+                            "data": "{{225.data}}",
+                            "headers": {
+                              "server": "{{225.headers.server}}",
+                              "set-cookie": [],
+                              "content-type": "{{225.headers.`content-type`}}",
+                              "cache-control": "{{225.headers.`cache-control`}}",
+                              "content-length": "{{225.headers.`content-length`}}",
+                              "content-encoding": "{{225.headers.`content-encoding`}}"
+                            },
+                            "statusCode": "{{225.statusCode}}"
+                          },
+                          "metadata": {
+                            "designer": {
+                              "x": 3300,
+                              "y": 1500
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": 217,
+                      "module": "builtin:Resume",
+                      "version": 1,
+                      "parameters": {},
+                      "mapper": {
+                        "data": "{{211.data}}",
+                        "headers": {
+                          "server": "{{211.headers.server}}",
+                          "set-cookie": [],
+                          "content-type": "{{211.headers.`content-type`}}",
+                          "cache-control": "{{211.headers.`cache-control`}}",
+                          "content-length": "{{211.headers.`content-length`}}",
+                          "content-encoding": "{{211.headers.`content-encoding`}}"
+                        },
+                        "statusCode": "{{211.statusCode}}"
+                      },
+                      "metadata": {
+                        "designer": {
+                          "x": 2700,
+                          "y": 1200
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": 209,
+                  "module": "builtin:Resume",
+                  "version": 1,
+                  "parameters": {},
+                  "mapper": {
+                    "data": "{{208.data}}",
+                    "headers": {
+                      "server": "{{208.headers.server}}",
+                      "set-cookie": [],
+                      "content-type": "{{208.headers.`content-type`}}",
+                      "cache-control": "{{208.headers.`cache-control`}}",
+                      "content-length": "{{208.headers.`content-length`}}",
+                      "content-encoding": "{{208.headers.`content-encoding`}}"
+                    },
+                    "statusCode": "{{208.statusCode}}"
+                  },
+                  "metadata": {
+                    "designer": {
+                      "x": 2100,
+                      "y": 900
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "id": 202,
+              "module": "builtin:BasicRouter",
+              "version": 1,
+              "mapper": null,
+              "metadata": {
+                "designer": {
+                  "x": 1500,
+                  "y": 300
+                }
+              },
+              "routes": [
+                {
+                  "flow": [
+                    {
+                      "id": 168,
+                      "module": "util:SetVariables",
+                      "version": 1,
+                      "parameters": {},
+                      "mapper": {
+                        "scope": "roundtrip",
+                        "variables": [
+                          {
+                            "name": "Spam",
+                            "value": "{{198.data.spam}}"
+                          },
+                          {
+                            "name": "Outcome",
+                            "value": "{{198.data.outcome}}"
+                          },
+                          {
+                            "name": "Answer",
+                            "value": "{{198.data.answer}}"
+                          },
+                          {
+                            "name": "is_phone_call",
+                            "value": "{{if(2.`Recording URL` = \"N/A - Lead Connector\"; \"No\"; if(length(2.`Recording URL`) > 1; \"Yes\"; \"No\"))}}"
+                          },
+                          {
+                            "name": "is_spam",
+                            "value": "{{if(198.data.spam; \"Yes\"; \"No\")}}"
+                          },
+                          {
+                            "name": "is_dropped",
+                            "value": "{{if(contains(lower(198.data.answer); \"dropped\"); \"Yes\"; \"No\")}}"
+                          },
+                          {
+                            "name": "has_outcome",
+                            "value": "{{if(198.data.outcome; \"Yes\"; \"No\")}}"
+                          }
+                        ]
+                      },
+                      "metadata": {
+                        "designer": {
+                          "x": 1800,
+                          "y": 150
+                        }
+                      }
+                    },
+                    {
+                      "id": 300,
+                      "module": "util:SetVariables",
+                      "version": 1,
+                      "mapper": {
+                        "scope": "roundtrip",
+                        "variables": [
+                          {
+                            "name": "final_Name",
+                            "value": "{{if(contains(lower(198.data.lead_name); \"not-found\"); 2.Name; 198.data.lead_name)}}"
+                          },
+                          {
+                            "name": "final_Location",
+                            "value": "{{if(contains(lower(198.data.lead_address); \"not-found\"); 2.Location; 198.data.lead_address)}}"
+                          },
+                          {
+                            "name": "final_JobType",
+                            "value": "{{if(contains(lower(198.data.lead_type); \"not-found\"); 2.`Job Type`; 198.data.lead_type)}}"
+                          },
+                          {
+                            "name": "final_Spam",
+                            "value": "{{if(168.is_phone_call = \"No\"; \"No\"; 168.is_spam)}}"
+                          },
+                          {
+                            "name": "final_CallAnswer",
+                            "value": "{{if(168.is_phone_call = \"No\"; \"Not a Phone Call\"; if(168.is_spam = \"Yes\"; \"No\"; if(168.is_dropped = \"Yes\"; \"Dropped\"; 198.data.answer)))}}"
+                          },
+                          {
+                            "name": "final_Outcome",
+                            "value": "{{if(168.is_spam = \"Yes\"; \"Disqualified\"; if(168.is_dropped = \"Yes\"; \"Disqualified\"; if(168.has_outcome = \"Yes\"; 198.data.outcome; 2.Outcome)))}}"
+                          },
+                          {
+                            "name": "final_Status",
+                            "value": "{{if(168.is_spam = \"Yes\"; \"Complete\"; if(168.is_dropped = \"Yes\"; \"Complete\"; if(168.has_outcome = \"Yes\"; \"Complete\"; 2.Status)))}}"
+                          }
+                        ]
+                      },
+                      "metadata": {
+                        "designer": {
+                          "x": 2100,
+                          "y": 150,
+                          "name": "Compute final values"
+                        }
+                      }
+                    },
+                    {
+                      "id": 301,
+                      "module": "mysql:UpdateTable",
+                      "version": 2,
+                      "parameters": {
+                        "table": "`systems_log`.`product_results_data`",
+                        "account": 50795,
+                        "showWarnings": false,
+                        "isToManageDataInSharedTransaction": true
+                      },
+                      "mapper": {
+                        "@ID": "",
+                        "@Date": "",
+                        "@Name": "{{300.final_Name}}",
+                        "@Tags": "",
+                        "@spam": "{{300.final_Spam}}",
+                        "where": [
+                          [
+                            {
+                              "a": "primary_id",
+                              "b": "{{2.primary_id}}",
+                              "o": "equal"
+                            }
+                          ]
+                        ],
+                        "@Audit": "",
+                        "@Email": "",
+                        "@Phone": "",
+                        "@niche": "",
+                        "@notes": "",
+                        "@11-Aug": "",
+                        "@20-aug": "",
+                        "@ItemID": "",
+                        "@Source": "",
+                        "@Status": "{{300.final_Status}}",
+                        "@cohort": "",
+                        "@months": "",
+                        "@period": "",
+                        "@16thaug": "",
+                        "@Invalid": "",
+                        "@Outcome": "{{300.final_Outcome}}",
+                        "@Summary": "",
+                        "@blocked": "",
+                        "@14-april": "",
+                        "@21st-nov": "",
+                        "@Job Type": "{{300.final_JobType}}",
+                        "@Location": "{{300.final_Location}}",
+                        "@backdate": "",
+                        "@call_sid": "",
+                        "@end_date": "",
+                        "@gbp_type": "",
+                        "@ContactID": "",
+                        "@timestamp": "",
+                        "@23rd check": "",
+                        "@677752_log": "",
+                        "@LocationID": "",
+                        "@package_id": "",
+                        "@primary_id": "",
+                        "@start_date": "",
+                        "@1018351_log": "",
+                        "@1044014_log": "",
+                        "@1045602_log": "",
+                        "@1045887_log": "",
+                        "@1230703_log": "",
+                        "@1238301_log": "",
+                        "@1541855_log": "",
+                        "@Call Answer": "{{300.final_CallAnswer}}",
+                        "@Job Tracker": "",
+                        "@Verified By": "",
+                        "@added-to-bq": "",
+                        "@20thaud-spam": "",
+                        "@max-analysis": "",
+                        "@Client Number": "",
+                        "@Location_Name": "",
+                        "@Recording URL": "",
+                        "@Transcription": "",
+                        "@client_status": "",
+                        "@feedback_spam": "",
+                        "@justification": "{{198.data.explanation}}",
+                        "@recording_sid": "",
+                        "@Checked-14-Nov": "",
+                        "@Monday Item ID": "",
+                        "@Opportunity ID": "",
+                        "@Outcome Reason": "",
+                        "@client_outcome": "",
+                        "@lead_verif_log": "{{var.scenario.executionUrl}}",
+                        "@location_count": "",
+                        "@revenue gained": "",
+                        "@user_update_at": "",
+                        "@vendor_package": "",
+                        "@4th-sep-outcome": "",
+                        "@feedback_reason": "",
+                        "@Date Categorized": "",
+                        "@Transcription ID": "",
+                        "@campaign_manager": "",
+                        "@feedback_outcome": "",
+                        "@Added to Verified": "",
+                        "@Backdate 10th Jul": "",
+                        "@Notification_sent": "",
+                        "@Transcription Retry": "",
+                        "@data-correct-28-sep": "",
+                        "@pickup-single-loose": "",
+                        "@sent_review_request": "",
+                        "@2-way-convo-original": "",
+                        "@27th-aug-call-answer": "",
+                        "@Added to Answer Rate": "",
+                        "@Submission Mechanism": "",
+                        "@call-answer-backdate": "",
+                        "@feedback_call_answer": "",
+                        "@gbp_fulfillment_tier": "",
+                        "@inbound phone number": "",
+                        "@service_agreement_id": "",
+                        "@feedback_submitted_by": "",
+                        "@Added to All Completed": "",
+                        "@pickup-new-singleprompt": "",
+                        "@missed-call-notification": "",
+                        "@ContactID-LocationID-Outcome": "",
+                        "@call-answer-2-way-max-adjustment": ""
+                      },
+                      "metadata": {
+                        "designer": {
+                          "x": 2400,
+                          "y": 150,
+                          "name": "Update lead row (unified)"
+                        },
+                        "restore": {
+                          "parameters": {
+                            "table": {
+                              "label": "systems_log.product_results_data"
+                            },
+                            "account": {
+                              "data": {
+                                "scoped": "true",
+                                "connection": "mysql"
+                              },
+                              "label": "SERVER MySQL connection (make_user@SERVICE_HOST:3306/undefined)"
+                            }
+                          }
+                        },
+                        "parameters": [
+                          {
+                            "name": "account",
+                            "type": "account:mysql",
+                            "label": "Connection",
+                            "required": true
+                          },
+                          {
+                            "name": "isToManageDataInSharedTransaction",
+                            "type": "boolean",
+                            "label": "Manage data within the shared transaction",
+                            "required": true
+                          },
+                          {
+                            "name": "showWarnings",
+                            "type": "boolean",
+                            "label": "Show warnings from the database",
+                            "required": true
+                          },
+                          {
+                            "name": "table",
+                            "type": "select",
+                            "label": "Table",
+                            "required": true
+                          }
+                        ],
+                        "expect": [
+                          {
+                            "name": "@Date",
+                            "type": "date",
+                            "label": "Date"
+                          },
+                          {
+                            "name": "@ContactID",
+                            "type": "text",
+                            "label": "ContactID"
+                          },
+                          {
+                            "name": "@LocationID",
+                            "type": "text",
+                            "label": "LocationID"
+                          },
+                          {
+                            "name": "@Location_Name",
+                            "type": "text",
+                            "label": "Location_Name"
+                          },
+                          {
+                            "name": "@Outcome",
+                            "type": "text",
+                            "label": "Outcome"
+                          },
+                          {
+                            "name": "@Phone",
+                            "type": "text",
+                            "label": "Phone"
+                          },
+                          {
+                            "name": "@ItemID",
+                            "type": "text",
+                            "label": "ItemID"
+                          },
+                          {
+                            "name": "@ContactID-LocationID-Outcome",
+                            "type": "text",
+                            "label": "ContactID-LocationID-Outcome"
+                          },
+                          {
+                            "name": "@Source",
+                            "type": "text",
+                            "label": "Source"
+                          },
+                          {
+                            "name": "@Job Type",
+                            "type": "text",
+                            "label": "Job Type"
+                          },
+                          {
+                            "name": "@Call Answer",
+                            "type": "text",
+                            "label": "Call Answer"
+                          },
+                          {
+                            "name": "@Tags",
+                            "type": "text",
+                            "label": "Tags"
+                          },
+                          {
+                            "name": "@Name",
+                            "type": "text",
+                            "label": "Name"
+                          },
+                          {
+                            "name": "@Email",
+                            "type": "text",
+                            "label": "Email"
+                          },
+                          {
+                            "name": "@Location",
+                            "type": "text",
+                            "label": "Location"
+                          },
+                          {
+                            "name": "@Verified By",
+                            "type": "text",
+                            "label": "Verified By"
+                          },
+                          {
+                            "name": "@Transcription",
+                            "type": "text",
+                            "label": "Transcription"
+                          },
+                          {
+                            "name": "@23rd check",
+                            "type": "text",
+                            "label": "23rd check"
+                          },
+                          {
+                            "name": "@Monday Item ID",
+                            "type": "text",
+                            "label": "Monday Item ID"
+                          },
+                          {
+                            "name": "@Summary",
+                            "type": "text",
+                            "label": "Summary"
+                          },
+                          {
+                            "name": "@Transcription ID",
+                            "type": "text",
+                            "label": "Transcription ID"
+                          },
+                          {
+                            "name": "@Recording URL",
+                            "type": "text",
+                            "label": "Recording URL"
+                          },
+                          {
+                            "name": "@Opportunity ID",
+                            "type": "text",
+                            "label": "Opportunity ID"
+                          },
+                          {
+                            "name": "@Audit",
+                            "type": "text",
+                            "label": "Audit"
+                          },
+                          {
+                            "name": "@Submission Mechanism",
+                            "type": "text",
+                            "label": "Submission Mechanism"
+                          },
+                          {
+                            "name": "@Job Tracker",
+                            "type": "text",
+                            "label": "Job Tracker"
+                          },
+                          {
+                            "name": "@Date Categorized",
+                            "type": "date",
+                            "label": "Date Categorized"
+                          },
+                          {
+                            "name": "@Backdate 10th Jul",
+                            "type": "text",
+                            "label": "Backdate 10th Jul"
+                          },
+                          {
+                            "name": "@ID",
+                            "type": "integer",
+                            "label": "ID"
+                          },
+                          {
+                            "name": "@primary_id",
+                            "type": "integer",
+                            "label": "primary_id"
+                          },
+                          {
+                            "name": "@client_outcome",
+                            "type": "text",
+                            "label": "client_outcome"
+                          },
+                          {
+                            "name": "@revenue gained",
+                            "type": "text",
+                            "label": "revenue gained"
+                          },
+                          {
+                            "name": "@Invalid",
+                            "type": "text",
+                            "label": "Invalid"
+                          },
+                          {
+                            "name": "@notes",
+                            "type": "text",
+                            "label": "notes"
+                          },
+                          {
+                            "name": "@Client Number",
+                            "type": "text",
+                            "label": "Client Number"
+                          },
+                          {
+                            "name": "@Outcome Reason",
+                            "type": "text",
+                            "label": "Outcome Reason"
+                          },
+                          {
+                            "name": "@Status",
+                            "type": "text",
+                            "label": "Status"
+                          },
+                          {
+                            "name": "@Transcription Retry",
+                            "type": "integer",
+                            "label": "Transcription Retry"
+                          },
+                          {
+                            "name": "@Added to Verified",
+                            "type": "text",
+                            "label": "Added to Verified"
+                          },
+                          {
+                            "name": "@Added to All Completed",
+                            "type": "text",
+                            "label": "Added to All Completed"
+                          },
+                          {
+                            "name": "@Added to Answer Rate",
+                            "type": "text",
+                            "label": "Added to Answer Rate"
+                          },
+                          {
+                            "name": "@11-Aug",
+                            "type": "text",
+                            "label": "11-Aug"
+                          },
+                          {
+                            "name": "@lead_verif_log",
+                            "type": "text",
+                            "label": "lead_verif_log"
+                          },
+                          {
+                            "name": "@1044014_log",
+                            "type": "text",
+                            "label": "1044014_log"
+                          },
+                          {
+                            "name": "@1230703_log",
+                            "type": "text",
+                            "label": "1230703_log"
+                          },
+                          {
+                            "name": "@1045602_log",
+                            "type": "text",
+                            "label": "1045602_log"
+                          },
+                          {
+                            "name": "@1045887_log",
+                            "type": "text",
+                            "label": "1045887_log"
+                          },
+                          {
+                            "name": "@1018351_log",
+                            "type": "text",
+                            "label": "1018351_log"
+                          },
+                          {
+                            "name": "@1238301_log",
+                            "type": "text",
+                            "label": "1238301_log"
+                          },
+                          {
+                            "name": "@677752_log",
+                            "type": "text",
+                            "label": "677752_log"
+                          },
+                          {
+                            "name": "@20-aug",
+                            "type": "text",
+                            "label": "20-aug"
+                          },
+                          {
+                            "name": "@backdate",
+                            "type": "date",
+                            "label": "backdate"
+                          },
+                          {
+                            "name": "@missed-call-notification",
+                            "type": "text",
+                            "label": "missed-call-notification"
+                          },
+                          {
+                            "name": "@sent_review_request",
+                            "type": "text",
+                            "label": "sent_review_request"
+                          },
+                          {
+                            "name": "@niche",
+                            "type": "text",
+                            "label": "niche"
+                          },
+                          {
+                            "name": "@campaign_manager",
+                            "type": "text",
+                            "label": "campaign_manager"
+                          },
+                          {
+                            "name": "@service_agreement_id",
+                            "type": "text",
+                            "label": "service_agreement_id"
+                          },
+                          {
+                            "name": "@package_id",
+                            "type": "text",
+                            "label": "package_id"
+                          },
+                          {
+                            "name": "@period",
+                            "type": "text",
+                            "label": "period"
+                          },
+                          {
+                            "name": "@gbp_type",
+                            "type": "text",
+                            "label": "gbp_type"
+                          },
+                          {
+                            "name": "@vendor_package",
+                            "type": "text",
+                            "label": "vendor_package"
+                          },
+                          {
+                            "name": "@client_status",
+                            "type": "text",
+                            "label": "client_status"
+                          },
+                          {
+                            "name": "@data-correct-28-sep",
+                            "type": "text",
+                            "label": "data-correct-28-sep"
+                          },
+                          {
+                            "name": "@blocked",
+                            "type": "text",
+                            "label": "blocked"
+                          },
+                          {
+                            "name": "@gbp_fulfillment_tier",
+                            "type": "text",
+                            "label": "gbp_fulfillment_tier"
+                          },
+                          {
+                            "name": "@location_count",
+                            "type": "integer",
+                            "label": "location_count"
+                          },
+                          {
+                            "name": "@spam",
+                            "type": "text",
+                            "label": "spam"
+                          },
+                          {
+                            "name": "@1541855_log",
+                            "type": "text",
+                            "label": "1541855_log"
+                          },
+                          {
+                            "name": "@added-to-bq",
+                            "type": "text",
+                            "label": "added-to-bq"
+                          },
+                          {
+                            "name": "@start_date",
+                            "type": "date",
+                            "label": "start_date"
+                          },
+                          {
+                            "name": "@end_date",
+                            "type": "date",
+                            "label": "end_date"
+                          },
+                          {
+                            "name": "@months",
+                            "type": "integer",
+                            "label": "months"
+                          },
+                          {
+                            "name": "@cohort",
+                            "type": "text",
+                            "label": "cohort"
+                          },
+                          {
+                            "name": "@Checked-14-Nov",
+                            "type": "text",
+                            "label": "Checked-14-Nov"
+                          },
+                          {
+                            "name": "@21st-nov",
+                            "type": "text",
+                            "label": "21st-nov"
+                          },
+                          {
+                            "name": "@Notification_sent",
+                            "type": "text",
+                            "label": "Notification_sent"
+                          },
+                          {
+                            "name": "@timestamp",
+                            "type": "date",
+                            "label": "timestamp"
+                          },
+                          {
+                            "name": "@inbound phone number",
+                            "type": "text",
+                            "label": "inbound phone number"
+                          },
+                          {
+                            "name": "@recording_sid",
+                            "type": "text",
+                            "label": "recording_sid"
+                          },
+                          {
+                            "name": "@call_sid",
+                            "type": "text",
+                            "label": "call_sid"
+                          },
+                          {
+                            "name": "@call-answer-backdate",
+                            "type": "text",
+                            "label": "call-answer-backdate"
+                          },
+                          {
+                            "name": "@16thaug",
+                            "type": "text",
+                            "label": "16thaug"
+                          },
+                          {
+                            "name": "@20thaud-spam",
+                            "type": "text",
+                            "label": "20thaud-spam"
+                          },
+                          {
+                            "name": "@2-way-convo-original",
+                            "type": "text",
+                            "label": "2-way-convo-original"
+                          },
+                          {
+                            "name": "@pickup-new-singleprompt",
+                            "type": "text",
+                            "label": "pickup-new-singleprompt"
+                          },
+                          {
+                            "name": "@call-answer-2-way-max-adjustment",
+                            "type": "text",
+                            "label": "call-answer-2-way-max-adjustment"
+                          },
+                          {
+                            "name": "@max-analysis",
+                            "type": "text",
+                            "label": "max-analysis"
+                          },
+                          {
+                            "name": "@pickup-single-loose",
+                            "type": "text",
+                            "label": "pickup-single-loose"
+                          },
+                          {
+                            "name": "@27th-aug-call-answer",
+                            "type": "text",
+                            "label": "27th-aug-call-answer"
+                          },
+                          {
+                            "name": "@4th-sep-outcome",
+                            "type": "text",
+                            "label": "4th-sep-outcome"
+                          },
+                          {
+                            "name": "@14-april",
+                            "type": "text",
+                            "label": "14-april"
+                          },
+                          {
+                            "name": "@justification",
+                            "type": "text",
+                            "label": "justification"
+                          },
+                          {
+                            "name": "@feedback_call_answer",
+                            "type": "text",
+                            "label": "feedback_call_answer"
+                          },
+                          {
+                            "name": "@feedback_outcome",
+                            "type": "text",
+                            "label": "feedback_outcome"
+                          },
+                          {
+                            "name": "@feedback_spam",
+                            "type": "text",
+                            "label": "feedback_spam"
+                          },
+                          {
+                            "name": "@feedback_reason",
+                            "type": "text",
+                            "label": "feedback_reason"
+                          },
+                          {
+                            "name": "@feedback_submitted_by",
+                            "type": "text",
+                            "label": "feedback_submitted_by"
+                          },
+                          {
+                            "name": "@user_update_at",
+                            "type": "date",
+                            "label": "user_update_at"
+                          },
+                          {
+                            "name": "where",
+                            "type": "filter",
+                            "label": "Filter",
+                            "options": {
+                              "store": [
+                                {
+                                  "label": "Date",
+                                  "value": "Date"
+                                },
+                                {
+                                  "label": "ContactID",
+                                  "value": "ContactID"
+                                },
+                                {
+                                  "label": "LocationID",
+                                  "value": "LocationID"
+                                },
+                                {
+                                  "label": "Location_Name",
+                                  "value": "Location_Name"
+                                },
+                                {
+                                  "label": "Outcome",
+                                  "value": "Outcome"
+                                },
+                                {
+                                  "label": "Phone",
+                                  "value": "Phone"
+                                },
+                                {
+                                  "label": "ItemID",
+                                  "value": "ItemID"
+                                },
+                                {
+                                  "label": "ContactID-LocationID-Outcome",
+                                  "value": "ContactID-LocationID-Outcome"
+                                },
+                                {
+                                  "label": "Source",
+                                  "value": "Source"
+                                },
+                                {
+                                  "label": "Job Type",
+                                  "value": "Job Type"
+                                },
+                                {
+                                  "label": "Call Answer",
+                                  "value": "Call Answer"
+                                },
+                                {
+                                  "label": "Tags",
+                                  "value": "Tags"
+                                },
+                                {
+                                  "label": "Name",
+                                  "value": "Name"
+                                },
+                                {
+                                  "label": "Email",
+                                  "value": "Email"
+                                },
+                                {
+                                  "label": "Location",
+                                  "value": "Location"
+                                },
+                                {
+                                  "label": "Verified By",
+                                  "value": "Verified By"
+                                },
+                                {
+                                  "label": "Transcription",
+                                  "value": "Transcription"
+                                },
+                                {
+                                  "label": "23rd check",
+                                  "value": "23rd check"
+                                },
+                                {
+                                  "label": "Monday Item ID",
+                                  "value": "Monday Item ID"
+                                },
+                                {
+                                  "label": "Summary",
+                                  "value": "Summary"
+                                },
+                                {
+                                  "label": "Transcription ID",
+                                  "value": "Transcription ID"
+                                },
+                                {
+                                  "label": "Recording URL",
+                                  "value": "Recording URL"
+                                },
+                                {
+                                  "label": "Opportunity ID",
+                                  "value": "Opportunity ID"
+                                },
+                                {
+                                  "label": "Audit",
+                                  "value": "Audit"
+                                },
+                                {
+                                  "label": "Submission Mechanism",
+                                  "value": "Submission Mechanism"
+                                },
+                                {
+                                  "label": "Job Tracker",
+                                  "value": "Job Tracker"
+                                },
+                                {
+                                  "label": "Date Categorized",
+                                  "value": "Date Categorized"
+                                },
+                                {
+                                  "label": "Backdate 10th Jul",
+                                  "value": "Backdate 10th Jul"
+                                },
+                                {
+                                  "label": "ID",
+                                  "value": "ID"
+                                },
+                                {
+                                  "label": "primary_id",
+                                  "value": "primary_id"
+                                },
+                                {
+                                  "label": "client_outcome",
+                                  "value": "client_outcome"
+                                },
+                                {
+                                  "label": "revenue gained",
+                                  "value": "revenue gained"
+                                },
+                                {
+                                  "label": "Invalid",
+                                  "value": "Invalid"
+                                },
+                                {
+                                  "label": "notes",
+                                  "value": "notes"
+                                },
+                                {
+                                  "label": "Client Number",
+                                  "value": "Client Number"
+                                },
+                                {
+                                  "label": "Outcome Reason",
+                                  "value": "Outcome Reason"
+                                },
+                                {
+                                  "label": "Status",
+                                  "value": "Status"
+                                },
+                                {
+                                  "label": "Transcription Retry",
+                                  "value": "Transcription Retry"
+                                },
+                                {
+                                  "label": "Added to Verified",
+                                  "value": "Added to Verified"
+                                },
+                                {
+                                  "label": "Added to All Completed",
+                                  "value": "Added to All Completed"
+                                },
+                                {
+                                  "label": "Added to Answer Rate",
+                                  "value": "Added to Answer Rate"
+                                },
+                                {
+                                  "label": "11-Aug",
+                                  "value": "11-Aug"
+                                },
+                                {
+                                  "label": "lead_verif_log",
+                                  "value": "lead_verif_log"
+                                },
+                                {
+                                  "label": "1044014_log",
+                                  "value": "1044014_log"
+                                },
+                                {
+                                  "label": "1230703_log",
+                                  "value": "1230703_log"
+                                },
+                                {
+                                  "label": "1045602_log",
+                                  "value": "1045602_log"
+                                },
+                                {
+                                  "label": "1045887_log",
+                                  "value": "1045887_log"
+                                },
+                                {
+                                  "label": "1018351_log",
+                                  "value": "1018351_log"
+                                },
+                                {
+                                  "label": "1238301_log",
+                                  "value": "1238301_log"
+                                },
+                                {
+                                  "label": "677752_log",
+                                  "value": "677752_log"
+                                },
+                                {
+                                  "label": "20-aug",
+                                  "value": "20-aug"
+                                },
+                                {
+                                  "label": "backdate",
+                                  "value": "backdate"
+                                },
+                                {
+                                  "label": "missed-call-notification",
+                                  "value": "missed-call-notification"
+                                },
+                                {
+                                  "label": "sent_review_request",
+                                  "value": "sent_review_request"
+                                },
+                                {
+                                  "label": "niche",
+                                  "value": "niche"
+                                },
+                                {
+                                  "label": "campaign_manager",
+                                  "value": "campaign_manager"
+                                },
+                                {
+                                  "label": "service_agreement_id",
+                                  "value": "service_agreement_id"
+                                },
+                                {
+                                  "label": "package_id",
+                                  "value": "package_id"
+                                },
+                                {
+                                  "label": "period",
+                                  "value": "period"
+                                },
+                                {
+                                  "label": "gbp_type",
+                                  "value": "gbp_type"
+                                },
+                                {
+                                  "label": "vendor_package",
+                                  "value": "vendor_package"
+                                },
+                                {
+                                  "label": "client_status",
+                                  "value": "client_status"
+                                },
+                                {
+                                  "label": "data-correct-28-sep",
+                                  "value": "data-correct-28-sep"
+                                },
+                                {
+                                  "label": "blocked",
+                                  "value": "blocked"
+                                },
+                                {
+                                  "label": "gbp_fulfillment_tier",
+                                  "value": "gbp_fulfillment_tier"
+                                },
+                                {
+                                  "label": "location_count",
+                                  "value": "location_count"
+                                },
+                                {
+                                  "label": "spam",
+                                  "value": "spam"
+                                },
+                                {
+                                  "label": "1541855_log",
+                                  "value": "1541855_log"
+                                },
+                                {
+                                  "label": "added-to-bq",
+                                  "value": "added-to-bq"
+                                },
+                                {
+                                  "label": "start_date",
+                                  "value": "start_date"
+                                },
+                                {
+                                  "label": "end_date",
+                                  "value": "end_date"
+                                },
+                                {
+                                  "label": "months",
+                                  "value": "months"
+                                },
+                                {
+                                  "label": "cohort",
+                                  "value": "cohort"
+                                },
+                                {
+                                  "label": "Checked-14-Nov",
+                                  "value": "Checked-14-Nov"
+                                },
+                                {
+                                  "label": "21st-nov",
+                                  "value": "21st-nov"
+                                },
+                                {
+                                  "label": "Notification_sent",
+                                  "value": "Notification_sent"
+                                },
+                                {
+                                  "label": "timestamp",
+                                  "value": "timestamp"
+                                },
+                                {
+                                  "label": "inbound phone number",
+                                  "value": "inbound phone number"
+                                },
+                                {
+                                  "label": "recording_sid",
+                                  "value": "recording_sid"
+                                },
+                                {
+                                  "label": "call_sid",
+                                  "value": "call_sid"
+                                },
+                                {
+                                  "label": "call-answer-backdate",
+                                  "value": "call-answer-backdate"
+                                },
+                                {
+                                  "label": "16thaug",
+                                  "value": "16thaug"
+                                },
+                                {
+                                  "label": "20thaud-spam",
+                                  "value": "20thaud-spam"
+                                },
+                                {
+                                  "label": "2-way-convo-original",
+                                  "value": "2-way-convo-original"
+                                },
+                                {
+                                  "label": "pickup-new-singleprompt",
+                                  "value": "pickup-new-singleprompt"
+                                },
+                                {
+                                  "label": "call-answer-2-way-max-adjustment",
+                                  "value": "call-answer-2-way-max-adjustment"
+                                },
+                                {
+                                  "label": "max-analysis",
+                                  "value": "max-analysis"
+                                },
+                                {
+                                  "label": "pickup-single-loose",
+                                  "value": "pickup-single-loose"
+                                },
+                                {
+                                  "label": "27th-aug-call-answer",
+                                  "value": "27th-aug-call-answer"
+                                },
+                                {
+                                  "label": "4th-sep-outcome",
+                                  "value": "4th-sep-outcome"
+                                },
+                                {
+                                  "label": "14-april",
+                                  "value": "14-april"
+                                },
+                                {
+                                  "label": "justification",
+                                  "value": "justification"
+                                },
+                                {
+                                  "label": "feedback_call_answer",
+                                  "value": "feedback_call_answer"
+                                },
+                                {
+                                  "label": "feedback_outcome",
+                                  "value": "feedback_outcome"
+                                },
+                                {
+                                  "label": "feedback_spam",
+                                  "value": "feedback_spam"
+                                },
+                                {
+                                  "label": "feedback_reason",
+                                  "value": "feedback_reason"
+                                },
+                                {
+                                  "label": "feedback_submitted_by",
+                                  "value": "feedback_submitted_by"
+                                },
+                                {
+                                  "label": "user_update_at",
+                                  "value": "user_update_at"
+                                }
+                              ],
+                              "operators": [
+                                {
+                                  "label": "Basic",
+                                  "options": [
+                                    {
+                                      "label": "Is not null",
+                                      "value": "exist"
+                                    },
+                                    {
+                                      "label": "Is null",
+                                      "value": "notexist"
+                                    },
+                                    {
+                                      "label": "Equal to",
+                                      "value": "equal"
+                                    },
+                                    {
+                                      "label": "Not equal to",
+                                      "value": "notequal"
+                                    },
+                                    {
+                                      "label": "Greater than",
+                                      "value": "greater"
+                                    },
+                                    {
+                                      "label": "Greater than or equal to",
+                                      "value": "greaterorequal"
+                                    },
+                                    {
+                                      "label": "Less than",
+                                      "value": "less"
+                                    },
+                                    {
+                                      "label": "Less than or equal to",
+                                      "value": "lessorequal"
+                                    },
+                                    {
+                                      "label": "Contains",
+                                      "value": "contain"
+                                    },
+                                    {
+                                      "label": "Does not contain",
+                                      "value": "notcontain"
+                                    },
+                                    {
+                                      "label": "Starts with",
+                                      "value": "startwith"
+                                    },
+                                    {
+                                      "label": "Does not start with",
+                                      "value": "notstartwith"
+                                    },
+                                    {
+                                      "label": "Ends with",
+                                      "value": "endwith"
+                                    },
+                                    {
+                                      "label": "Does not end with",
+                                      "value": "notendwith"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "id": 302,
+                      "module": "builtin:BasicRouter",
+                      "version": 1,
+                      "mapper": null,
+                      "metadata": {
+                        "designer": {
+                          "x": 2700,
+                          "y": 150
+                        }
+                      },
+                      "routes": [
+                        {
+                          "flow": [
+                            {
+                              "id": 108,
+                              "module": "http:ActionSendData",
+                              "version": 3,
+                              "parameters": {
+                                "handleErrors": false,
+                                "useNewZLibDeCompress": true
+                              },
+                              "filter": {
+                                "name": "is_spam",
+                                "conditions": [
+                                  [
+                                    {
+                                      "a": "{{300.final_Spam}}",
+                                      "b": "Yes",
+                                      "o": "text:equal"
+                                    }
+                                  ]
+                                ]
+                              },
+                              "mapper": {
+                                "ca": "",
+                                "qs": [],
+                                "url": "https://hook.us1.make.celonis.com",
+                                "gzip": true,
+                                "method": "post",
+                                "headers": [],
+                                "timeout": "",
+                                "useMtls": false,
+                                "authPass": "",
+                                "authUser": "",
+                                "bodyType": "multipart_form_data",
+                                "serializeUrl": false,
+                                "shareCookies": false,
+                                "parseResponse": false,
+                                "followRedirect": true,
+                                "formDataFields": [
+                                  {
+                                    "key": "spam",
+                                    "value": "Yes",
+                                    "fieldType": "text"
+                                  },
+                                  {
+                                    "key": "contactId",
+                                    "value": "{{2.ContactID}}",
+                                    "fieldType": "text"
+                                  },
+                                  {
+                                    "key": "primaryId",
+                                    "value": "{{2.primary_id}}",
+                                    "fieldType": "text"
+                                  },
+                                  {
+                                    "key": "locationId",
+                                    "value": "{{2.LocationID}}",
+                                    "fieldType": "text"
+                                  }
+                                ],
+                                "useQuerystring": false,
+                                "followAllRedirects": false,
+                                "rejectUnauthorized": true
+                              },
+                              "metadata": {
+                                "designer": {
+                                  "x": 3000,
+                                  "y": 0,
+                                  "name": "Spam Block"
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "flow": [
+                            {
+                              "id": 158,
+                              "module": "http:ActionSendData",
+                              "version": 3,
+                              "parameters": {
+                                "handleErrors": false,
+                                "useNewZLibDeCompress": true
+                              },
+                              "filter": {
+                                "name": "Not Answered",
+                                "conditions": [
+                                  [
+                                    {
+                                      "a": "{{300.final_CallAnswer}}",
+                                      "b": "No",
+                                      "o": "text:equal"
+                                    }
+                                  ]
+                                ]
+                              },
+                              "mapper": {
+                                "ca": "",
+                                "qs": [],
+                                "url": "https://hook.us1.make.com/",
+                                "gzip": true,
+                                "method": "post",
+                                "headers": [],
+                                "timeout": "",
+                                "useMtls": false,
+                                "authPass": "",
+                                "authUser": "",
+                                "bodyType": "multipart_form_data",
+                                "serializeUrl": false,
+                                "shareCookies": false,
+                                "parseResponse": false,
+                                "followRedirect": true,
+                                "formDataFields": [
+                                  {
+                                    "key": "primary_id",
+                                    "value": "{{2.primary_id}}",
+                                    "fieldType": "text"
+                                  }
+                                ],
+                                "useQuerystring": false,
+                                "followAllRedirects": false,
+                                "rejectUnauthorized": true
+                              },
+                              "metadata": {
+                                "designer": {
+                                  "x": 3000,
+                                  "y": 300,
+                                  "name": "Not Answered Notify"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "flow": [
+                    {
+                      "id": 166,
+                      "module": "util:SetVariables",
+                      "version": 1,
+                      "parameters": {},
+                      "mapper": {
+                        "scope": "roundtrip",
+                        "variables": [
+                          {
+                            "name": "Spam",
+                            "value": "{{emptystring}}"
+                          },
+                          {
+                            "name": "Outcome",
+                            "value": "{{emptystring}}"
+                          },
+                          {
+                            "name": "Answer",
+                            "value": "{{emptystring}}"
+                          }
+                        ]
+                      },
+                      "metadata": {
+                        "designer": {
+                          "x": 1800,
+                          "y": 600
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 169,
+              "module": "mysql:UpdateTable",
+              "version": 2,
+              "parameters": {
+                "table": "`systems_log`.`product_results_data`",
+                "account": 50795,
+                "showWarnings": false,
+                "isToManageDataInSharedTransaction": true
+              },
+              "filter": {
+                "name": "Transcription missing",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{2.Transcription}}",
+                      "o": "notexist"
+                    },
+                    {
+                      "a": "{{2.`Transcription ID`}}",
+                      "b": "Not a Phone Call",
+                      "o": "text:equal"
+                    }
+                  ]
+                ]
+              },
+              "mapper": {
+                "where": [
+                  [
+                    {
+                      "a": "primary_id",
+                      "b": "{{2.primary_id}}",
+                      "o": "equal"
+                    }
+                  ]
+                ],
+                "@Status": "Complete",
+                "@Outcome": "Disqualified",
+                "@lead_verif_log": "{{var.scenario.executionUrl}}"
+              },
+              "metadata": {
+                "designer": {
+                  "x": 900,
+                  "y": 3600,
+                  "name": "Outcome"
+                },
+                "parameters": [
+                  {
+                    "name": "account",
+                    "type": "account:mysql",
+                    "label": "Connection",
+                    "required": true
+                  },
+                  {
+                    "name": "isToManageDataInSharedTransaction",
+                    "type": "boolean",
+                    "label": "Manage data within the shared transaction",
+                    "required": true
+                  },
+                  {
+                    "name": "showWarnings",
+                    "type": "boolean",
+                    "label": "Show warnings from the database",
+                    "required": true
+                  },
+                  {
+                    "name": "table",
+                    "type": "select",
+                    "label": "Table",
+                    "required": true
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "instant": true,
+    "version": 1,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": false,
+      "slots": null,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": true,
+      "freshVariables": false
+    },
+    "designer": {
+      "orphans": []
+    },
+    "zone": "us1.make.celonis.com",
+    "notes": []
+  }
+}
